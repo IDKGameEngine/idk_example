@@ -12,7 +12,7 @@ int main(int argc, char **argv)
         "A Game Probably", 1280, 720
     });
 
-    auto *win = plat->getWindow();
+    // auto *win = plat->getWindow();
     // auto *ren = idk::Platform::createRenderer(win);
 
     while (plat->running())
