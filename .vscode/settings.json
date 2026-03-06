@@ -89,9 +89,8 @@
         "**/.git/objects/**": true,
         "**/.git/subtree-cache/**": true,
         "**/.hg/store/**": true,
-        "${workspaceFolder}/build/**": true,
-        "${workspaceFolder}/output/**": true,
-        "${workspaceFolder}/external/**": true
+        "${workspaceFolder}/build-debug/**": true,
+        "${workspaceFolder}/build-release/**": true,
     },
     "files.participants.timeout": 100
 }

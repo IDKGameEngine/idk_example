@@ -1,5 +1,5 @@
 #include "idk/platform/platform.hpp"
-#include "idk/idk_gfx.hpp"
+#include "idk/gfx/gfx.hpp"
 #include <cstdio>
 
 
