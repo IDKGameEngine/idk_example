@@ -1,6 +1,7 @@
 #include "idk/platform/platform.hpp"
 #include "idk/gfx/gfx.hpp"
-#include <cstdio>
+
+#include "idk/core/nbufferedvector.hpp"
 
 
 int main(int argc, char **argv)
@@ -8,12 +9,27 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
+    using tbuf_type = idk::core::NBufferedVector<float, 3, 64>;
+    tbuf_type tbuf;
+
+    idk::core::NBufferedVectorWriter<tbuf_type> tbufWriter(tbuf);
+    idk::core::NBufferedVectorReader<tbuf_type> tbufReader(tbuf);
+
+    tbufWriter.push_back(3.04f);
+    tbufWriter.push_back(1.15149f);
+    tbufWriter.push_back(1.0f);
+
+    tbufWriter.flush();
+    tbufWriter.flush();
+
+    for (auto &x: tbufReader)
+    {
+        printf("%f\n", x);
+    }
+
     auto *plat = idk::platform::createPlatform({
         "A Game Probably", 1280, 720
     });
-
-    // auto *win = plat->getWindow();
-    // auto *ren = idk::Platform::createRenderer(win);
 
     while (plat->running())
     {
