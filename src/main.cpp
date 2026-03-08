@@ -1,7 +1,31 @@
-#include "idk/platform/platform.hpp"
-#include "idk/gfx/gfx.hpp"
-
+#include "idk/engine/engine.hpp"
+#include "idk/core/platform.hpp"
 #include "idk/core/nbufferedvector.hpp"
+
+#include <thread>
+
+static std::vector<std::thread> threads;
+
+static idk::Engine *engine;
+static idk::core::IPlatform *plat;
+static idk::core::IRenderer *ren;
+
+static void platform_main()
+{
+    while (engine->getStatus() != idk::EngineStatus::Off)
+    {
+        plat->onUpdate();
+    }  
+}
+
+static void render_main()
+{
+    while (engine->getStatus() != idk::EngineStatus::Off)
+    {
+        ren->onUpdate();
+    }
+}
+
 
 
 int main(int argc, char **argv)
@@ -9,59 +33,22 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    using tbuf_type = idk::core::NBufferedVector<float, 3, 64>;
-    tbuf_type tbuf;
+    engine = new idk::Engine({"A Game Probably", 1280, 720});
+    plat = engine->getPlatform();
+    ren  = engine->getRenderer();
 
-    idk::core::NBufferedVectorWriter<tbuf_type> tbufWriter(tbuf);
-    idk::core::NBufferedVectorReader<tbuf_type> tbufReader(tbuf);
-
-    tbufWriter.push_back(3.04f);
-    tbufWriter.push_back(1.15149f);
-    tbufWriter.push_back(1.0f);
-
-    tbufWriter.flush();
-    tbufWriter.flush();
-
-    for (auto &x: tbufReader)
+    threads.push_back(std::thread(platform_main));
+    threads.push_back(std::thread(render_main));
+    for (auto &thread: threads)
     {
-        printf("%f\n", x);
+        thread.detach();
     }
 
-    auto *plat = idk::platform::createPlatform({
-        "A Game Probably", 1280, 720
-    });
-
-    while (plat->running())
+    while (engine->getStatus() != idk::EngineStatus::Off)
     {
-        plat->update();
+        engine->update();
     }
 
-
-    // // auto *cam = gfx->createCamera(512, 512);
-    // // (void)cam;
-
-    // // GameObject player;
-    // // player.addComponent<GraphicsComponent>();
-    // // player.addComponent<KeybdIoComponent>();
-    // // player.addComponent<MouseIoComponent>();
-    // // player.addComponent<PhysicsComponent>();
-    // // player.addComponent<GraphicsComponent>();
-
-    // while (plat.running())
-    // {
-    //     plat.update();
-    //     // player.update();
-
-    //     // if (kb->keyWasPressed(SDL_SCANCODE_E))
-    //     //     printf("E PRESSED\n");
-    //     // if (kb->keyWasReleased(SDL_SCANCODE_E))
-    //     //     printf("E RELEASED\n");
-
-    //     // if (ms->mouseWasPressed(iolib::Mouse::Button::LEFT))
-    //     //     printf("Mouse LEFT PRESSED\n");
-    //     // if (ms->mouseWasReleased(iolib::Mouse::Button::LEFT))
-    //     //     printf("Mouse LEFT RELEASED\n");
-    // }
 
     return 0;
 }
