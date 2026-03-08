@@ -10,5 +10,5 @@ target_compile_features(
     ${PROJECT_NAME} PUBLIC cxx_std_23
 )
 target_link_libraries(
-    ${PROJECT_NAME} PRIVATE idk_engine
+    ${PROJECT_NAME} PRIVATE idk_engine idk_gfx idk_game
 )

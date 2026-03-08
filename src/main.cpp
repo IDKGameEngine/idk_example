@@ -1,32 +1,14 @@
 #include "idk/engine/engine.hpp"
-#include "idk/core/platform.hpp"
-#include "idk/core/nbufferedvector.hpp"
+#include "idk/gfx/gfx.hpp"
+#include "idk/gfx/renderer.hpp"
+#include "idk/game/game.hpp"
 
+#include <barrier>
 #include <thread>
 
-static std::vector<std::thread> threads;
 
-static idk::Engine *engine;
-static idk::core::IPlatform *plat;
-static idk::core::IRenderer *ren;
-
-static void platform_main()
-{
-    while (engine->getStatus() != idk::EngineStat::Off)
-    {
-        plat->onUpdate();
-    }  
-}
-
-static void render_main()
-{
-    while (engine->getStatus() != idk::EngineStat::Off)
-    {
-        engine->onUpdate();
-        ren->onUpdate();
-    }
-}
-
+static std::barrier mainloop_sync_(2);
+static std::barrier shutdown_sync_(2);
 
 
 int main(int argc, char **argv)
@@ -34,17 +16,58 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    engine = new idk::Engine({"A Game Probably", 1280, 720});
-    plat = engine->getPlatform();
+    idk::Engine engine;
+    std::thread t0(idk::game::main, &engine);
 
-    threads.push_back(std::thread(platform_main));
-    for (auto &thread: threads)
-    {
-        thread.detach();
-    }
-
-    render_main();
+    t0.detach();
+    idk::gfx::main(&engine);
 
     return 0;
 }
 
+
+
+void idk::gfx::main(idk::core::IEngine *engine)
+{
+    idk::gfx::RenderEngine ren({
+        "A Game Probably", 1280, 720
+    });
+
+    while (engine->get_stat() != EngineStat::Dead)
+    {
+        ren.beginFrame();
+
+        SDL_Event e;
+        while (SDL_PollEvent(&e))
+        {
+            if (e.type == SDL_EVENT_QUIT)
+            {
+                VLOG_INFO("SDL_EVENT_QUIT");
+                engine->shutdown();
+            }
+        }
+
+        ren.endFrame();
+        engine->update();
+
+        mainloop_sync_.arrive_and_wait();
+    }
+
+    shutdown_sync_.arrive_and_wait();
+}
+
+
+
+void idk::game::main(idk::core::IEngine *engine)
+{
+    idk::game::Game g;
+
+    while (engine->get_stat() != EngineStat::Dead)
+    {
+        g.update();
+
+        mainloop_sync_.arrive_and_wait();
+    }
+
+    shutdown_sync_.arrive_and_wait();
+}
